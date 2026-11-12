@@ -1,0 +1,57 @@
+
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract project
+        run: unzip -q konkur-ai-apk-build.zip
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        working-directory: konkur-ai
+        run: npm install
+
+      - name: Add Android
+        working-directory: konkur-ai
+        run: npx cap add android
+
+      - name: Sync Android
+        working-directory: konkur-ai
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: konkur-ai/android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: konkur-humanities-debug-apk
+          path: konkur-ai/android/app/build/outputs/apk/debug/app-debug.apk
+          
